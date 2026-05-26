@@ -54,3 +54,7 @@ ssh my-vmss-instance-through-bastion
 ```text
 /subscriptions/<subscriptionId>/resourceGroups/<resourceGroupName>/providers/Microsoft.Network/bastionHosts/<bastionName>
 ```
+
+## Credit
+
+This project references the implementation from [Azure/azure-cli-extensions/bastion](https://github.com/Azure/azure-cli-extensions/tree/main/src/bastion/azext_bastion).
