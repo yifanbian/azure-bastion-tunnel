@@ -1,0 +1,94 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Test
+        run: go test ./...
+
+  build:
+    name: Build ${{ matrix.goos }}/${{ matrix.goarch }}${{ matrix.goarm }}
+    runs-on: ubuntu-latest
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+            artifact: azure-bastion-tunnel-linux-amd64
+            binary: azure-bastion-tunnel
+          - goos: linux
+            goarch: arm64
+            artifact: azure-bastion-tunnel-linux-arm64
+            binary: azure-bastion-tunnel
+          - goos: linux
+            goarch: arm
+            goarm: "7"
+            artifact: azure-bastion-tunnel-linux-armv7
+            binary: azure-bastion-tunnel
+          - goos: darwin
+            goarch: amd64
+            artifact: azure-bastion-tunnel-darwin-amd64
+            binary: azure-bastion-tunnel
+          - goos: darwin
+            goarch: arm64
+            artifact: azure-bastion-tunnel-darwin-arm64
+            binary: azure-bastion-tunnel
+          - goos: windows
+            goarch: amd64
+            artifact: azure-bastion-tunnel-windows-amd64
+            binary: azure-bastion-tunnel.exe
+          - goos: windows
+            goarch: arm64
+            artifact: azure-bastion-tunnel-windows-arm64
+            binary: azure-bastion-tunnel.exe
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build
+        env:
+          CGO_ENABLED: "0"
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          GOARM: ${{ matrix.goarm }}
+        run: |
+          mkdir -p "dist/${{ matrix.artifact }}"
+          go build -trimpath -ldflags="-s -w" -o "dist/${{ matrix.artifact }}/${{ matrix.binary }}" .
+          cp README.md LICENSE "dist/${{ matrix.artifact }}/"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: dist/${{ matrix.artifact }}/*
+          if-no-files-found: error
