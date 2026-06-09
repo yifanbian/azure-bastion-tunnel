@@ -1,4 +1,4 @@
-module azure-bastion-tunnel
+module github.com/yifanbian/azure-bastion-tunnel
 
 go 1.25.0
 
